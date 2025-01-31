@@ -2,6 +2,9 @@ FROM python:3.9
 
 COPY requirements.txt .
 
-RUN pip install requirements.text -r
+RUN pip install -r requirements.txt
+
+WORKDIR /app
+COPY hello.py .
 
 ENTRYPOINT ["bash"]
