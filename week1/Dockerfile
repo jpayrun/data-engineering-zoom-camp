@@ -7,4 +7,5 @@ RUN pip install -r requirements.txt
 WORKDIR /app
 COPY hello.py .
 
-ENTRYPOINT ["bash"]
+CMD ["python", "hello.py", "30"]
+# ENTRYPOINT ["bash"]
