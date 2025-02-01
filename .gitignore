@@ -8,6 +8,7 @@ __pycache__/
 
 # ignore csv files
 *.csv
+*.gz
 
 # Distribution / packaging
 .Python
