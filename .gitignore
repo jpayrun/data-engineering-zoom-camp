@@ -10,6 +10,7 @@ __pycache__/
 *.csv
 *.gz
 *.tf
+terraform/
 
 # ignore credentials
 keys/
