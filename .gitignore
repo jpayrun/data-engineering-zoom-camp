@@ -9,6 +9,7 @@ __pycache__/
 # ignore csv files
 *.csv
 *.gz
+*.tf
 
 # ignore credentials
 keys/
