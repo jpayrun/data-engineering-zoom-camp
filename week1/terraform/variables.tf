@@ -1,7 +1,7 @@
 
 variable "credentials" {
     description = "My Credentials"
-    default = "../../keys/credentials.json"
+    default = "~/.google/credentials/google_credentials.json"
 }
 
 variable "location" {
