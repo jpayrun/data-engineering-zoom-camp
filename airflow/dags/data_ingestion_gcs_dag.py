@@ -76,7 +76,7 @@ with DAG(
 
     unzip_dataset_to_csv = BashOperator(
         task_id="format_gz_to_csv",
-        bash_command=f"gunzip {path_to_local_home}/{dataset_file} -O {path_to_local_home}/{csv_file}"
+        bash_command=f"gunzip {path_to_local_home}/{dataset_file}"
     )
 
     format_to_parquet_task = PythonOperator(
