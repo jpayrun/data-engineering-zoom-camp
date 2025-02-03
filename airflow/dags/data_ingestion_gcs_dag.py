@@ -14,7 +14,7 @@ import pyarrow.parquet as pq
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
 BUCKET = os.environ.get("GCP_GCS_BUCKET")
 
-dataset_file = "yellow_tripdata_2021-01.csv"
+dataset_file = "yellow_tripdata_2021-01.csv.gz"
 dataset_url = f"https://github.com/DataTalksClub/nyc-tlc-data/releases/download/yellow/{dataset_file}"
 csv_file = dataset_file[:-3]
 path_to_local_home = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
@@ -76,7 +76,7 @@ with DAG(
 
     unzip_dataset_to_csv = BashOperator(
         task_id="format_gz_to_csv",
-        bash_command=f"gunzip {dataset_file} -o {csv_file}"
+        bash_command=f"gunzip {path_to_local_home}/{dataset_file} -O {path_to_local_home}/{csv_file}"
     )
 
     format_to_parquet_task = PythonOperator(
@@ -113,4 +113,4 @@ with DAG(
         },
     )
 
-    download_dataset_task >> format_to_parquet_task >> local_to_gcs_task >> bigquery_external_table_task
+    download_dataset_task >> unzip_dataset_to_csv >> format_to_parquet_task >> local_to_gcs_task >> bigquery_external_table_task
