@@ -1,6 +1,6 @@
 provider "google" {
   credentials = file(var.credentials)
-  project     = "snappy-abode-449618-e1"
+  project     = var.project
   region      = "us-east1"
 }
 

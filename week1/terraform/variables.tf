@@ -4,6 +4,11 @@ variable "credentials" {
     default = "~/.google/credentials/google_credentials.json"
 }
 
+variable "project" {
+    description = "Project description"
+    default = "snappy-abode-449618-e1"
+}
+
 variable "location" {
     description = "Project location"
     default = "US"
@@ -12,7 +17,7 @@ variable "location" {
 
 variable "bq_dataset_name" {
     description = "My BigQuery Dataset Name"
-    default = "demo_dataset"
+    default = "trips_data_all"
 
 }
 
