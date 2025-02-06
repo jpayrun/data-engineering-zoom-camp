@@ -33,8 +33,8 @@ url = "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.p
 with local_workflow:
 
     wget_task = BashOperator(
-        task_id = 'wget',
-        bash_command = f'wget {url} -O {AIRFLOW_HOME}/output.parquet'
+        task_id = 'curl',
+        bash_command = f'curl -sS {url} > {AIRFLOW_HOME}/output.parquet'
     )
 
     # ingest_task = PythonOperator(
