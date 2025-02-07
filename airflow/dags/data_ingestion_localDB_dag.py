@@ -32,8 +32,12 @@ def hello():
 
 URL_PREFIX = 'https://d37ci6vzurychx.cloudfront.net/trip-data'
 # Updating the execution date using jinja to the templates to Year Month
-URL_TEMPLATE = URL_PREFIX + '/yellow_tripdata_{{execution_date.strftime(\'%Y-%m\')}}.parquet'
-OUTPUT_FILE_TEMPLATE = AIRFLOW_HOME + '/output{{execution_date.strftime(\'%Y-%m\')}}.parquet'
+# URL_TEMPLATE = URL_PREFIX + '/yellow_tripdata_{{execution_date.strftime(\'%Y-%m\')}}.parquet'
+# OUTPUT_FILE_TEMPLATE = AIRFLOW_HOME + '/output{{execution_date.strftime(\'%Y-%m\')}}.parquet'
+
+# Removing jinja for testing since no 2025 data
+URL_TEMPLATE = URL_PREFIX + '/yellow_tripdata_2024-01.parquet'
+OUTPUT_FILE_TEMPLATE = AIRFLOW_HOME + '/output2024-01.parquet'
 
 PG_HOST = os.getenv("PG_HOST")
 PG_USER = os.getenv("PG_USER")
@@ -52,7 +56,7 @@ with local_workflow:
         task_id = 'ingest_task',
         python_callable=ingest_callable,
         op_kwargs = {
-            'table_name': "???", 
+            'table_name': "yellow_taxi_trips", 
             "password": PG_PASSWORD,
             "host": PG_HOST, 
             "user": PG_USER, 
