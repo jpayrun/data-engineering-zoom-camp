@@ -29,16 +29,16 @@ def hello():
     return "I Ran!"
 
 URL_PREFIX = 'https://d37ci6vzurychx.cloudfront.net/trip-data'
-URL_TEMPLATE = f'{URL_PREFIX}/yellow_tripdata_2024-01.parquet'
+# Updating the execution date using jinja to the templates to Year Month
+URL_TEMPLATE = URL_PREFIX + '/yellow_tripdata_{{execution_date.strftime(\'%Y-%m\')}}.parquet'
+OUTPUT_FILE_TEMPLATE = AIRFLOW_HOME + '/output{{execution_date.strftime(\'%Y-%m\')}}.parquet'
 
 
 with local_workflow:
 
     wget_task = BashOperator(
         task_id = 'curl',
-        # bash_command = f'curl -sS {URL_TEMPLATE} > {AIRFLOW_HOME}/output.parquet'
-        # Formats the date into Year Month
-        bash_command = 'ehco "{{ execution_date.strftime(\'%Y-%m\')}}"'
+        bash_command = f'curl -sS {URL_TEMPLATE} > {OUTPUT_FILE_TEMPLATE}'
     )
 
     # ingest_task = PythonOperator(
