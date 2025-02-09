@@ -1,7 +1,6 @@
 import os
 import datetime as dt
 import logging
-import constants
 
 from airflow import DAG
 from airflow.utils.dates import days_ago
