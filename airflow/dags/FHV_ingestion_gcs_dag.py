@@ -91,7 +91,7 @@ with DAG(
             "tableReference": {
                 "projectId": PROJECT_ID,
                 "datasetId": BIGQUERY_DATASET,
-                "tableId": VEHICLE + "_{{logical_date.strftime(\'%Y-%m\')}}",
+                "tableId": VEHICLE + "_tripdata_{{logical_date.strftime(\'%Y-%m\')}}",
             },
             "externalDataConfiguration": {
                 "sourceFormat": "PARQUET",
