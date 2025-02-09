@@ -14,10 +14,57 @@ path_to_local_home = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 BIGQUERY_DATASET = os.environ.get("BIGQUERY_DATASET", 'trips_data_all')
 
 DATASET = "tripdata"
-COLOUR_RANGE = {'yellow': 'tpep_pickup_datetime', 'fhv': 'pickup_datetime'}
-SUB_FOLDER = {'yellow': 'yellow_taxi', 'fhv': 'fhv'}
+COLOUR_RANGE = {'yellow': 'tpep_pickup_datetime', 'green': 'lpep_pickup_datetime'}
+SUB_FOLDER = {'yellow': 'yellow_taxi', 'green': 'green_taxi'}
 INPUT_PART = "raw"
 INPUT_FILETYPE = "parquet"
+
+GREEN_SCHEMA = [
+    {"name": "VendorID", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "lpep_pickup_datetime", "type": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "lpep_dropoff_datetime", "type": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "store_and_fwd_flag", "STRING": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "RatecodeID", "FLOAT": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "PULocationID", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "DOLocationID", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "passenger_count", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "trip_distance", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "fare_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "extra", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "mta_tax", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "tip_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "tolls_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "ehail_fee", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "improvement_surcharge", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "total_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "payment_type", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "trip_type", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "congestion_surcharge", "type": "FLOAT", "mode": "NULLABLE"},
+]
+
+YELLOW_SCHEMA = [
+    {"name": "VendorID", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "tpep_pickup_datetime", "type": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "tpep_dropoff_datetime", "type": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "passenger_count", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "trip_distance", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "RatecodeID", "FLOAT": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "store_and_fwd_flag", "STRING": "TIMESTAMP", "mode": "NULLABLE"},
+    {"name": "PULocationID", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "DOLocationID", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "payment_type", "type": "INTEGER", "mode": "NULLABLE"},
+    {"name": "fare_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "extra", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "mta_tax", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "tip_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "tolls_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "improvement_surcharge", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "total_amount", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "congestion_surcharge", "type": "FLOAT", "mode": "NULLABLE"},
+    {"name": "airport_fee", "type": "FLOAT", "mode": "NULLABLE"},
+]
+
+SCHEMA = {'yellow': YELLOW_SCHEMA, 'green': GREEN_SCHEMA}
 
 default_args = {
     "owner": "airflow",
@@ -41,7 +88,7 @@ with DAG(
             task_id=f'move_{colour}_{DATASET}_files_task',
             source_bucket=BUCKET,
             # source_object=f'{INPUT_PART}/{SUB_FOLDER[colour]}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
-            source_object=f'{SUB_FOLDER[colour]}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
+            source_object=f'{INPUT_PART}/{SUB_FOLDER[colour]}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
             destination_bucket=BUCKET,
             destination_object=f'{colour}/{colour}_{DATASET}',
             move_object=True
@@ -56,7 +103,8 @@ with DAG(
                     "tableId": f"{colour}_{DATASET}_external_table",
                 },
                 "externalDataConfiguration": {
-                    "autodetect": "True",
+                    # "autodetect": "True",
+                    "schemaFields": SCHEMA[colour],
                     "sourceFormat": f"{INPUT_FILETYPE.upper()}",
                     "sourceUris": [f"gs://{BUCKET}/{colour}/*"],
                 },
@@ -81,4 +129,5 @@ with DAG(
             }
         )
 
-        move_files_gcs_task >> bigquery_external_table_task >> bq_create_partitioned_table_job
+        #move_files_gcs_task >> 
+        bigquery_external_table_task >> bq_create_partitioned_table_job
