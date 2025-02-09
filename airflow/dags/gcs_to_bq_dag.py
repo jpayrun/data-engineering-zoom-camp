@@ -1,3 +1,4 @@
+
 import os
 import logging
 
@@ -13,7 +14,8 @@ path_to_local_home = os.environ.get("AIRFLOW_HOME", "/opt/airflow/")
 BIGQUERY_DATASET = os.environ.get("BIGQUERY_DATASET", 'trips_data_all')
 
 DATASET = "tripdata"
-COLOUR_RANGE = {'yellow': 'tpep_pickup_datetime', 'green': 'lpep_pickup_datetime'}
+COLOUR_RANGE = {'yellow': 'tpep_pickup_datetime', 'fhv': 'pickup_datetime'}
+SUB_FOLDER = {'yellow': 'yellow_taxi', 'fhv': 'fhv'}
 INPUT_PART = "raw"
 INPUT_FILETYPE = "parquet"
 
@@ -27,7 +29,7 @@ default_args = {
 # NOTE: DAG declaration - using a Context Manager (an implicit way)
 with DAG(
     dag_id="gcs_2_bq_dag",
-    schedule_interval="@daily",
+    schedule_interval="@monthly",
     default_args=default_args,
     catchup=False,
     max_active_runs=1,
@@ -38,7 +40,7 @@ with DAG(
         move_files_gcs_task = GCSToGCSOperator(
             task_id=f'move_{colour}_{DATASET}_files_task',
             source_bucket=BUCKET,
-            source_object=f'{INPUT_PART}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
+            source_object=f'{INPUT_PART}/{SUB_FOLDER[colour]}/{colour}_{DATASET}*.{INPUT_FILETYPE}',
             destination_bucket=BUCKET,
             destination_object=f'{colour}/{colour}_{DATASET}',
             move_object=True
