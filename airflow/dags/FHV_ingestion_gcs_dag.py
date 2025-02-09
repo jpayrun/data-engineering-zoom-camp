@@ -55,7 +55,7 @@ default_args = {
 
 # NOTE: DAG declaration - using a Context Manager (an implicit way)
 with DAG(
-    dag_id=f"data_ingestion_gcp_{VEHICLE}_dag",
+    dag_id=f"data_ingestion_gcp_{VEHICLE}_dag_fixed",
     start_date=dt.datetime(2019, 1, 1),
     end_date=dt.datetime(2019, 12, 2),
     schedule_interval='@monthly',
