@@ -8,8 +8,7 @@ from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 
 from google.cloud import storage
-from airflow.providers.google.cloud.operators.bigquery import (BigQueryCreateExternalTableOperator,
-                                                               BigQueryDeleteTableOperator)
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateExternalTableOperator
 import pyarrow.csv as pv
 import pyarrow.parquet as pq
 import pandas as pd
@@ -99,17 +98,18 @@ YELLOW_SCHEMA = [
 SCHEMA = {'yellow': YELLOW_SCHEMA, 'green': GREEN_SCHEMA}
 
 def yellow(file: str) -> None:
-    df = (pd.read_parquet(file).
+    (pd.read_parquet(file).
       assign(airport_fee = lambda df_a: df_a.airport_fee.fillna(0.0)).
       assign(airport_fee = lambda df_a: df_a.airport_fee.astype('float64')).
-      assign(airport_fee = lambda df_a: df_a.passenger_count.fillna(0.0)).
-      assign(airport_fee = lambda df_a: df_a.passenger_count.astype('float64')))
-    df.to_parquet(file)
+      to_parquet(file)
+      )
 
 def green(file: str) -> None:
-    df = (pd.read_parquet(file).
-      assign(ehail_fee = lambda df_a: df_a.ehail_fee.fillna(0.0).astype('float64')))
-    df.to_parquet(file)
+    (pd.read_parquet(file).
+      assign(ehail_fee = lambda df_a: df_a.ehail_fee.fillna(0.0)).
+      assign(ehail_fee = lambda df_a: df_a.ehail_fee * 1.0).
+      assign(ehail_fee = lambda df_a: df_a.ehail_fee.astype('float64')).
+      to_parquet(file))
 
 fix_function = {
     'yellow': yellow,
@@ -118,10 +118,10 @@ fix_function = {
 
 # NOTE: DAG declaration - using a Context Manager (an implicit way)
 with DAG(
-    dag_id="data_ingestion_gcp_yellow_green_taxi_dag",
-    start_date=dt.datetime(2019, 1, 1),
+    dag_id="data_ingestion_gcp_yellow_taxi_2024_dag",
+    start_date=dt.datetime(2024, 1, 1),
     # end_date=dt.datetime(2019, 4, 1),
-    end_date=dt.datetime(2020, 12, 1),
+    end_date=dt.datetime(2024, 6, 1),
     schedule_interval='@monthly',
     default_args=default_args,
     # Set to True to catchup
@@ -131,7 +131,7 @@ with DAG(
     tags=['dtc-de'],
 ) as dag:
 
-    for color in ['yellow', 'green']:
+    for color in ['yellow']:
 
         URL_PREFIX = 'https://d37ci6vzurychx.cloudfront.net/trip-data/'
         DATA_FILE = color + '_tripdata_{{logical_date.strftime(\'%Y-%m\')}}.parquet'
@@ -142,13 +142,13 @@ with DAG(
             bash_command=f"curl -sSL {URL} > {path_to_local_home}/{DATA_FILE}"
         )
 
-        fix_for_upload = PythonOperator(
-            task_id=f"{color}_fixing_columns",
-            python_callable=fix_function[color],
-            op_kwargs={
-                "file": f"{path_to_local_home}/{DATA_FILE}"
-            }
-        )
+        # fix_for_upload = PythonOperator(
+        #     task_id=f"{color}_fixing_columns",
+        #     python_callable=fix_function[color],
+        #     op_kwargs={
+        #         "file":f"{path_to_local_home}/{DATA_FILE}"
+        #     }
+        # )
 
         local_to_gcs_task = PythonOperator(
             task_id=f"{color}_taxi_local_to_gcs_task",
@@ -158,13 +158,6 @@ with DAG(
                 "object_name": f"raw/{color}_taxi/{DATA_FILE}",
                 "local_file": f"{path_to_local_home}/{DATA_FILE}",
             },
-        )
-
-        delete_table = BigQueryDeleteTableOperator(
-            task_id=f"{color}_delete_old_table",
-            deletion_dataset_table=f"{PROJECT_ID}.{BIGQUERY_DATASET}.{color}" + "_tripdata_{{logical_date.strftime(\'%Y-%m\')}}",
-            ignore_if_missing=True,  # Prevent failure if table doesn’t exist
-            bigquery_conn_id="google_cloud_default",
         )
 
         # Set up with Bigquery
@@ -185,4 +178,4 @@ with DAG(
             },
         )
 
-        download_dataset_task >> fix_for_upload >> local_to_gcs_task >> delete_table >> bigquery_external_table_task
+        download_dataset_task >> local_to_gcs_task >> bigquery_external_table_task

@@ -4,7 +4,7 @@ import logging
 
 from airflow import DAG
 from airflow.utils.dates import days_ago
-from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateExternalTableOperator, BigQueryInsertJobOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCreateExternalTableOperator, BigQueryInsertJobOperator, BigQueryDeleteTableOperator
 from airflow.providers.google.cloud.transfers.gcs_to_gcs import GCSToGCSOperator
 
 PROJECT_ID = os.environ.get("GCP_PROJECT_ID")
@@ -94,6 +94,13 @@ with DAG(
             move_object=True
         )
 
+        delete_table = BigQueryDeleteTableOperator(
+            task_id=f"{colour}_delete_old_table",
+            deletion_dataset_table=f"{PROJECT_ID}.{BIGQUERY_DATASET}.{colour}_{DATASET}_external_table",
+            ignore_if_missing=True,  # Prevent failure if table doesn’t exist
+            bigquery_conn_id="google_cloud_default",
+        )
+
         bigquery_external_table_task = BigQueryCreateExternalTableOperator(
             task_id=f"bq_{colour}_{DATASET}_external_table_task",
             table_resource={
@@ -129,5 +136,4 @@ with DAG(
             }
         )
 
-        #move_files_gcs_task >> 
-        bigquery_external_table_task >> bq_create_partitioned_table_job
+        move_files_gcs_task >> delete_table >> bigquery_external_table_task >> bq_create_partitioned_table_job
